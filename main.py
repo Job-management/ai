@@ -32,6 +32,32 @@ job_encoder.fit(aggregated_data["job"])
 city_encoder.fit(aggregated_data["city"])
 
 
+def historical_job_posting_count():
+    df = data.groupby(["city", "month"]).size().reset_index(name="job_postings_count")
+
+    df["month"] = df["month"].astype(str)
+
+    # Create a list of cities to iterate through
+    cities = df["city"].unique()
+    data_list = []
+    print(cities)
+
+    # Loop through each city and append data to the response list
+    for city in cities:
+        city_df = df[df["city"] == city]
+        city_data = {
+            "city": city,
+            "values": city_df["job_postings_count"].tolist(),
+        }
+        data_list.append(city_data)
+
+    response = {
+        "labels": df[df["city"] == "Đà Nẵng"]["month"].tolist(),
+        "data": data_list,
+    }
+    return response
+
+
 def predict_future(job, city, time_step=12, future_periods=12):
     job_encoded = job_encoder.transform([job])[0]
     city_encoded = city_encoder.transform([city])[0]
@@ -77,6 +103,17 @@ def predict_future(job, city, time_step=12, future_periods=12):
     return historical_counts, future_predict
 
 
+@app.route("/api/v1/job_history", methods=["GET"])
+@cross_origin()
+def historical_job():
+    try:
+        historical_counts = historical_job_posting_count()
+
+        return jsonify(historical_counts)
+    except:
+        return {"code": 500, "message": "Internal server error"}, 500
+
+
 @app.route("/api/v1/job_future", methods=["POST"])
 @cross_origin()
 def predict_job():
@@ -97,4 +134,4 @@ def predict_job():
 
 # Start Backend
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="5001")
+    app.run(host="0.0.0.0", port="5001", debug=True)
