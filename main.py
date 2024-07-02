@@ -132,6 +132,12 @@ def predict_job():
         return {"code": 500, "message": "Internal server error"}, 500
 
 
+@app.route("/whoami", methods=["GET"])
+@cross_origin()
+def whoami():
+    return "AI SERVER"
+
+
 # Start Backend
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port="5001", debug=True)
